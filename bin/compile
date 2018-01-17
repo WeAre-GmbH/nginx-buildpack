@@ -2,28 +2,33 @@
 
 set -e
 
-mkdir -p "$1/bin/"
-cp "bin/nginx-$STACK" "$1/bin/nginx"
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+
+mkdir -p "$BUILD_DIR/bin/"
+cp "bin/nginx-$STACK" "$BUILD_DIR/bin/nginx"
 nginx_version=$(./bin/nginx-$STACK -V 2>&1 | head -1 | awk '{ print $NF }')
 echo "-----> nginx-buildpack: Installed ${nginx_version} to app/bin"
-cp bin/start-nginx "$1/bin/"
+cp bin/start-nginx "$BUILD_DIR/bin/"
 echo '-----> nginx-buildpack: Added start-nginx to app/bin'
 
-mkdir -p "$1/config"
+mkdir -p "$BUILD_DIR/config"
 
-cp config/mime.types "$1/config/"
+cp config/mime.types "$BUILD_DIR/config/"
 echo '-----> nginx-buildpack: Default mime.types copied to app/config/'
 
-if [[ ! -f $1/config/nginx.conf.erb ]]; then
-	cp config/nginx.conf.erb "$1/config/"
+if [[ ! -f $BUILD_DIR/config/nginx.conf.erb ]]; then
+	cp config/nginx.conf.erb "$BUILD_DIR/config/"
 	echo '-----> nginx-buildpack: Default config copied to app/config.'
 else
 	echo '-----> nginx-buildpack: Custom config found in app/config.'
 fi
-exit 0
 
 echo '-----> nginx-buildpack: Running custom build script.'
 
-if [[ -x "$1/.build.sh" ]]; then
-  cd $1 && $1/.build.sh
+if [[ -x "$BUILD_DIR/.build.sh" ]]; then
+	$BUILD_DIR/.build.sh $BUILD_DIR $CACHE_DIR $ENV_DIR
 fi
+
+exit 0
